@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            background: black;
+            color: #00FF00;
+            overflow: hidden;
+        }
+
+        /* Matrix Animation */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Layout Styles */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 25%;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            box-shadow: 0 0 10px #00FF00;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin: 0 0 10px 0;
+            color: #00FF00;
+            text-align: center;
+        }
+
+        .user-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .user-list li {
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #00FF00;
+            margin-bottom: 5px;
+            transition: background 0.3s;
+        }
+
+        .user-list li:hover {
+            background: #003300;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content h2 {
+            margin-top: 0;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #00FF00;
+            box-shadow: 0 0 10px #00FF00;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #00FF00;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .refresh-btn:hover {
+            background: #003300;
+            color: #00FF00;
+        }
+    </style>
+</head>
+<body>
+    <!-- Canvas for Matrix Animation -->
+    <canvas id="matrix"></canvas>
+
+    <!-- Admin Panel -->
+    <div class="admin-panel">
+        <div class="sidebar">
+            <h1 id="total-users">Total Users: 0</h1>
+            <ul id="user-list"></ul>
+        </div>
+        <div class="content">
+            <div id="user-data">
+                <p>Select a user to view their details.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Animation
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array.from({ length: Math.floor(columns) }, () => 1);
+    
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+            ctx.fillStyle = '#00FF00';
+            ctx.font = `${fontSize}px monospace`;
+    
+            drops.forEach((y, i) => {
+                const text = String.fromCharCode(0x30A0 + Math.random() * 96);
+                const x = i * fontSize;
+                ctx.fillText(text, x, y * fontSize);
+    
+                if (y * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+    
+                drops[i]++;
+            });
+        }
+    
+        setInterval(drawMatrix, 50);
+    
+        // Fetch and Display Users
+        async function fetchUsers() {
+            try {
+                const response = await fetch('/admin', {
+                    headers: { 'Accept': 'application/json' },
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+    
+                const data = await response.json();
+                updateUserList(data.user_list, data.total_users);
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+    
+        // Update User List in the UI
+        function updateUserList(userList, totalUsers) {
+            const totalUsersDiv = document.getElementById('total-users');
+            const userListDiv = document.getElementById('user-list');
+    
+            if (!totalUsersDiv || !userListDiv) {
+                console.error('Error: Required elements not found in the DOM.');
+                return;
+            }
+    
+            totalUsersDiv.innerText = `Total Users: ${totalUsers}`;
+            userListDiv.innerHTML = userList
+                .map(
+                    (user) => `
+                <li onclick="fetchUserData('${user}')">${user}</li>
+            `
+                )
+                .join('');
+        }
+    
+        // Fetch and Display User Data
+        async function fetchUserData(ip) {
+    const userDataDiv = document.getElementById('user-data');
+    if (!userDataDiv) {
+        console.error('Error: User data element not found.');
+        return;
+    }
+
+    userDataDiv.innerHTML = '<p>Loading user data...</p>';
+
+    try {
+        const response = await fetch(`/admin/user/${ip}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(data); // Debug the structure of the response
+
+        // Safely handle data properties
+        const messages = Array.isArray(data.messages) ? data.messages : [];
+        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+        const email = data.email?.email || 'Not provided';
+        const files = Array.isArray(data.files) ? data.files : [];
+
+        userDataDiv.innerHTML = `
+            <h2>User: ${data.ip}</h2>
+            <div class="card">
+                <h3>Messages</h3>
+                <ul>${messages.map(msg => `<li>${msg.content} (${msg.timestamp})</li>`).join('')}</ul>
+            </div>
+            <div class="card">
+                <h3>Notifications</h3>
+                <ul>${notifications.map(note => `<li>${note.message} (${note.timestamp})</li>`).join('')}</ul>
+            </div>
+            <div class="card">
+                <h3>Email</h3>
+                <p>${email}</p>
+            </div>
+            <div class="card">
+                <h3>Files</h3>
+                <ul>${files.map(file => `<li><a href="/user/files/${data.ip}/${file}" target="_blank">${file}</a></li>`).join('')}</ul>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        userDataDiv.innerHTML = '<p>Error fetching user data. Please try again later.</p>';
+    }
+}
+
+        // Auto Refresh User List
+        setInterval(fetchUsers, 5000); // Refresh every 5 seconds
+    
+        // Initial Load
+        fetchUsers();
+    </script>
+    
+</body>
+</html>
