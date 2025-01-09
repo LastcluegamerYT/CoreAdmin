@@ -13,18 +13,32 @@ BASE_DIR = "user_data"
 # Ensure base directory exists
 os.makedirs(BASE_DIR, exist_ok=True)
 
+from hashlib import sha256
+
+def get_user_id():
+    ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent', '')
+    user_id = sha256(f"{ip}-{user_agent}".encode()).hexdigest()
+    return user_id
+
+def get_real_ip():
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0]
+    return request.remote_addr
 @app.route('/')
+
 def hello():
     return render_template('user.html')
 
 # Helper functions
-def get_user_dir(ip):
-    user_dir = os.path.join(BASE_DIR, ip)
+def get_user_dir(user_id):
+    user_dir = os.path.join(BASE_DIR, user_id)
     os.makedirs(user_dir, exist_ok=True)
     return user_dir
 
-def get_user_file_path(ip, filename):
-    return os.path.join(get_user_dir(ip), filename)
+def get_user_file_path(user_id, filename):
+    return os.path.join(get_user_dir(user_id), filename)
+
 
 def load_json(file_path, default_data=None):
     if os.path.exists(file_path):
@@ -160,4 +174,4 @@ def static_files(path):
 
 # Run server
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
