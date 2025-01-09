@@ -5,41 +5,17 @@ import datetime
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Allow CORS for frontend integration
+CORS(app)
 
-# Base directory for user data
-BASE_DIR = "user_data"
+# Base directory for data storage
+BASE_DIR = "data"
+USER_DATA_FILE = os.path.join(BASE_DIR, "user.json")
+WORLD_CHAT_FILE = os.path.join(BASE_DIR, "world.json")
 
 # Ensure base directory exists
 os.makedirs(BASE_DIR, exist_ok=True)
 
-from hashlib import sha256
-
-def get_user_id():
-    ip = request.remote_addr
-    user_agent = request.headers.get('User-Agent', '')
-    user_id = sha256(f"{ip}-{user_agent}".encode()).hexdigest()
-    return user_id
-
-def get_real_ip():
-    if request.headers.get('X-Forwarded-For'):
-        return request.headers.get('X-Forwarded-For').split(',')[0]
-    return request.remote_addr
-@app.route('/')
-
-def hello():
-    return render_template('user.html')
-
 # Helper functions
-def get_user_dir(user_id):
-    user_dir = os.path.join(BASE_DIR, user_id)
-    os.makedirs(user_dir, exist_ok=True)
-    return user_dir
-
-def get_user_file_path(user_id, filename):
-    return os.path.join(get_user_dir(user_id), filename)
-
-
 def load_json(file_path, default_data=None):
     if os.path.exists(file_path):
         try:
@@ -47,131 +23,85 @@ def load_json(file_path, default_data=None):
                 return json.load(f)
         except json.JSONDecodeError:
             pass  # If JSON is invalid, return the default data
-    return default_data if default_data else {}
+    return default_data if default_data else []
 
 def save_json(file_path, data):
     with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
 
-def delete_old_files():
-    cutoff_date = datetime.datetime.now() - datetime.timedelta(days=5)
-    for user_folder in os.listdir(BASE_DIR):
-        user_dir = os.path.join(BASE_DIR, user_folder)
-        messages_path = os.path.join(user_dir, "messages.json")
+# Initialize files
+if not os.path.exists(USER_DATA_FILE):
+    save_json(USER_DATA_FILE, [])
 
-        if os.path.exists(messages_path):
-            messages = load_json(messages_path, [])
-            messages = [msg for msg in messages if datetime.datetime.fromisoformat(msg['timestamp']) > cutoff_date]
-            save_json(messages_path, messages)
+if not os.path.exists(WORLD_CHAT_FILE):
+    save_json(WORLD_CHAT_FILE, [])
 
-# Admin Endpoints
-@app.route("/admin", methods=["GET"])
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+@app.route("/submit_problem", methods=["POST"])
+def submit_problem():
+    data = request.json
+    email = data.get("email")
+    problem = data.get("problem")
+
+    if not email or not problem:
+        return jsonify({"status": "error", "message": "Email and problem are required"}), 400
+
+    users = load_json(USER_DATA_FILE, [])
+    users.append({"email": email, "problem": problem})
+    save_json(USER_DATA_FILE, users)
+
+    return jsonify({"status": "success", "message": "Problem submitted successfully"})
+
+@app.route("/emails", methods=["GET"])
+def get_emails():
+    emails = load_json(USER_DATA_FILE, [])
+    return jsonify({"emails": emails})  # Return data in a structured way
+
+
+@app.route("/world_chat", methods=["GET", "POST"])
+def world_chat():
+    if request.method == "GET":
+        chats = load_json(WORLD_CHAT_FILE, [])
+        return jsonify({"chats": chats})
+    elif request.method == "POST":
+        data = request.json
+        username = data.get("username")
+        message = data.get("message")
+        reply_to = data.get("reply_to", None)
+
+        if not username or not message:
+            return jsonify({"status": "error", "message": "Username and message are required"}), 400
+
+        chats = load_json(WORLD_CHAT_FILE, [])
+        chat_entry = {
+            "username": username,
+            "message": message,
+            "timestamp": datetime.datetime.now().strftime("%I:%M %p"),
+        }
+        if reply_to:
+            chat_entry["reply_to"] = reply_to
+        chats.append(chat_entry)
+        save_json(WORLD_CHAT_FILE, chats)
+
+        return jsonify({"status": "success", "message": "Message sent"})
+
+@app.route("/world_chat_page")
+def world_chat_page():
+    return render_template("world.html")
+
+@app.route("/admin_panel")
 def admin_panel():
-    if request.headers.get("Accept") == "application/json":
-        # Return JSON data for fetch requests
-        user_list = os.listdir(BASE_DIR)
-        total_users = len(user_list)
-        return jsonify({"user_list": user_list, "total_users": total_users})
-    else:
-        # Render HTML for direct browser visits
-        user_list = os.listdir(BASE_DIR)
-        total_users = len(user_list)
-        return render_template("admin.html", user_list=user_list, total_users=total_users)
+    chats = load_json(WORLD_CHAT_FILE, [])
+    users = load_json(USER_DATA_FILE, [])
+    return render_template("admin.html", chats=chats, users=users)
 
+@app.route("/clear_world_chat", methods=["POST"])
+def clear_world_chat():
+    save_json(WORLD_CHAT_FILE, [])
+    return jsonify({"status": "success", "message": "World chat cleared"})
 
-@app.route("/admin/user/<ip>", methods=["GET"])
-def view_user_data(ip):
-    user_dir = get_user_dir(ip)
-    messages = load_json(get_user_file_path(ip, "messages.json"), [])
-    notifications = load_json(get_user_file_path(ip, "notifications.json"), [])
-    email = load_json(get_user_file_path(ip, "email.json"), {})
-    files = []
-    files_dir = os.path.join(user_dir, "files")
-    if os.path.exists(files_dir):
-        files = os.listdir(files_dir)
-    return jsonify({"messages": messages, "notifications": notifications, "email": email, "files": files, "ip": ip})
-
-@app.route("/admin/notify/<ip>", methods=["POST"])
-def notify_user(ip):
-    notification = request.json.get("message")
-    notifications_path = get_user_file_path(ip, "notifications.json")
-    notifications = load_json(notifications_path, [])
-    notifications.append({"message": notification, "timestamp": datetime.datetime.now().isoformat()})
-    save_json(notifications_path, notifications)
-    return jsonify({"status": "success", "message": "Notification sent."})
-
-@app.route("/admin/delete_old", methods=["POST"])
-def delete_old():
-    delete_old_files()
-    return jsonify({"status": "success", "message": "Old messages deleted."})
-
-# User Endpoints
-@app.route("/user/send", methods=["POST"])
-def user_send():
-    ip = request.remote_addr
-
-    # Process message
-    content = request.form.get("content")
-    email = request.form.get("email")
-    file = request.files.get("file")
-    file_path = None
-
-    if file:
-        user_dir = get_user_dir(ip)
-        files_dir = os.path.join(user_dir, "files")
-        os.makedirs(files_dir, exist_ok=True)
-        file_path = os.path.join(files_dir, file.filename)
-        file.save(file_path)
-
-    # Save email for new users
-    email_path = get_user_file_path(ip, "email.json")
-    if not os.path.exists(email_path) and email:
-        save_json(email_path, {"email": email})
-
-    # Save message
-    messages_path = get_user_file_path(ip, "messages.json")
-    messages = load_json(messages_path, [])
-    
-    # Ensure `messages` is a list
-    if not isinstance(messages, list):
-        messages = []
-
-    messages.append({
-        "content": content,
-        "file": file_path,
-        "timestamp": datetime.datetime.now().isoformat()
-    })
-    save_json(messages_path, messages)
-
-    return jsonify({"status": "success", "message": "Message sent."})
-
-
-@app.route("/user/messages", methods=["GET"])
-def user_messages():
-    ip = request.remote_addr
-    messages_path = get_user_file_path(ip, "messages.json")
-    notifications_path = get_user_file_path(ip, "notifications.json")
-
-    messages = load_json(messages_path, [])
-    notifications = load_json(notifications_path, [])
-
-    return jsonify({"messages": messages, "notifications": notifications})
-
-@app.route("/user", methods=["GET"])
-def user_panel():
-    return render_template("user.html")
-
-# Serve user-uploaded files
-@app.route("/user/files/<ip>/<filename>", methods=["GET"])
-def serve_user_file(ip, filename):
-    files_dir = os.path.join(get_user_dir(ip), "files")
-    return send_from_directory(files_dir, filename)
-
-# Serve static files (CSS, JS, etc.)
-@app.route('/static/<path:path>', methods=['GET'])
-def static_files(path):
-    return send_from_directory('static', path)
-
-# Run server
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
