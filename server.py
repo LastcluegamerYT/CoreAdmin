@@ -53,7 +53,7 @@ def submit_problem():
     users.append({"email": email, "problem": problem})
     save_json(USER_DATA_FILE, users)
 
-    return jsonify({"status": "success", "message": "submitted successfully \n You will get mail in 5 hours,   Thanks you\n", email})
+    return jsonify({"status": "success", "message": "submitted successfully,   You will get mail in 5 hours,   Thanks you})
 
 @app.route("/emails", methods=["GET"])
 def get_emails():
