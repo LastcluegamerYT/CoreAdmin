@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Chat - CodeAdmin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: black;
+            overflow: hidden;
+            color: #00ff00;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            overflow-y: auto;
+            height: 70vh;
+            color: #00ff00;
+        }
+        .chat-input {
+            margin: 20px auto;
+            display: flex;
+            gap: 10px;
+            max-width: 800px;
+            justify-content: center;
+        }
+        .chat-input input, .chat-input button {
+            font-size: 1rem;
+            padding: 10px;
+            border: none;
+            outline: none;
+            border-radius: 5px;
+        }
+        .chat-input input {
+            flex: 1;
+            background: black;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+        .chat-input button {
+            background: #00ff00;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #00ff00;
+        }
+        .chat-message b {
+            color: cyan;
+        }
+        .reply {
+            font-size: 0.9rem;
+            color: yellow;
+        }
+        
+    </style>
+</head>
+<body>
+    <canvas id="backgroundCanvas"></canvas>
+    <h1 style="text-align:center; color:#00ff00; margin-top: 20px;">CodeAdmin-World</h1>
+    <div class="chat-container" id="chat-container"></div>
+    <div class="chat-input">
+        <input type="text" id="username" placeholder="Enter your username">
+        <input type="text" id="message" placeholder="Enter your message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    <script>
+        const chatContainer = document.getElementById("chat-container");
+
+        async function fetchChats() {
+            const response = await fetch("/world_chat");
+            const data = await response.json();
+            chatContainer.innerHTML = "";
+            data.chats.forEach(chat => {
+                const chatElement = document.createElement("div");
+                chatElement.classList.add("chat-message");
+                chatElement.innerHTML = `<b>${chat.username}</b>: ${chat.message}`;
+                if (chat.reply_to) {
+                    chatElement.innerHTML += `<div class="reply">Replying to: ${chat.reply_to}</div>`;
+                }
+                chatContainer.appendChild(chatElement);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+        }
+
+        async function sendMessage() {
+            const username = document.getElementById("username").value;
+            const message = document.getElementById("message").value;
+            if (!username || !message) return alert("Username and message are required!");
+            await fetch("/world_chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, message })
+            });
+            document.getElementById("message").value = "";
+            fetchChats();
+        }
+
+        setInterval(fetchChats, 5000); // Auto-refresh every 5 seconds
+        fetchChats();
+
+        // Matrix Background Animation
+        const canvas = document.getElementById("backgroundCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 16;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#00ff00";
+            ctx.font = fontSize + "px 'Courier New'";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height || Math.random() > 0.95) {
+                    drops[i] = 0;
+                }
+
+                drops[i]++;
+            }
+        }
+
+        // Additional Background Shapes
+        function drawShapes() {
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 50, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 255, 0, ${Math.random() * 0.3})`;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.rect(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 50, Math.random() * 50);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+                ctx.fill();
+            }
+        }
+
+        function animate() {
+            drawMatrix();
+            drawShapes();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
