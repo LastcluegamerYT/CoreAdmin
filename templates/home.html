@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeAdmin - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* General Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            background: black;
+            color: #00ff00;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            text-align: center;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #00ff00;
+        }
+
+        .form input, .form textarea, .form button {
+            width: 100%;
+            padding: 10px;
+            background: black;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-size: 1em;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .form textarea {
+            resize: none;
+            height: 100px;
+        }
+
+        .form button {
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .form button:hover {
+            background: #00ff00;
+            color: black;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .world-chat-button {
+            padding: 10px 20px;
+            background: black;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .world-chat-button:hover {
+            background: #00ff00;
+            color: black;
+        }
+
+        footer {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 1.2em; /* Slightly larger font for emphasis */
+    color: #ff0000; /* Initial color */
+    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000; /* Initial glow effect */
+    font-family: 'Courier New', Courier, monospace; /* Hacker-style font */
+    animation: glow 1s infinite alternate; /* Animation to change colors */
+}
+
+@keyframes glow {
+    0% {
+        color: #ff0000; /* Red */
+        text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000;
+    }
+    100% {
+        color: #0000ff; /* Blue */
+        text-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff, 0 0 30px #0000ff;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <canvas id="background1"></canvas>
+    <canvas id="background2"></canvas>
+    <canvas id="background3"></canvas>
+    <canvas id="background4"></canvas>
+    <canvas id="background5"></canvas>
+
+    <div class="container">
+        <h1>Welcome to the CodeAdmin</h1>
+        <div class="form">
+            <input type="text" id="email" placeholder="Enter your email address">
+            <textarea id="problem" placeholder="Describe What's you want!"></textarea>
+            <button onclick="submitProblem()">Submit Problem</button>
+        </div>
+        <div class="buttons">
+            <button class="world-chat-button" onclick="goToWorldChat()">World Chat</button>
+        </div>
+    </div>
+    <footer style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+        &copy; 2025 Prashant Pandey | Site Name: Code-Admin<br>
+        Made by Prashant Pandey
+    </footer>
+    
+    <script>
+        /* Server Problem Submission */
+        function submitProblem() {
+            const email = document.getElementById('email').value;
+            const problem = document.getElementById('problem').value;
+
+            if (!email || !problem) {
+                alert('Please fill out both fields!');
+                return;
+            }
+
+            fetch('/submit_problem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, problem })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Your problem has been submitted!');
+                    document.getElementById('email').value = '';
+                    document.getElementById('problem').value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            });
+        }
+
+        /* Redirect to World Chat */
+        function goToWorldChat() {
+            window.location.href = '/world_chat_page';
+        }
+
+        /* Background Animations */
+
+        // 1. Falling Matrix Code
+        function fallingMatrix(canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const letters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const fontSize = 16;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = Array(columns).fill(1);
+
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#00ff00';
+                ctx.font = `${fontSize}px monospace`;
+
+                drops.forEach((y, x) => {
+                    const text = letters.charAt(Math.floor(Math.random() * letters.length));
+                    ctx.fillText(text, x * fontSize, y * fontSize);
+
+                    if (y * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[x] = 0;
+                    }
+                    drops[x]++;
+                });
+            }
+
+            setInterval(draw, 50);
+        }
+
+        // 2. Floating Particles
+        function floatingParticles(canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = Array.from({ length: 100 }).map(() => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 3 + 1,
+                dx: (Math.random() - 0.5) * 2,
+                dy: (Math.random() - 0.5) * 2
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.fill();
+                });
+            }
+
+            function update() {
+                particles.forEach(p => {
+                    p.x += p.dx;
+                    p.y += p.dy;
+
+                    if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+                });
+            }
+
+            function animate() {
+                draw();
+                update();
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // Call Background Animations
+        fallingMatrix(document.getElementById('background1'));
+        floatingParticles(document.getElementById('background2'));
+
+        // Add more animations as needed!
+    </script>
+</body>
+</html>
