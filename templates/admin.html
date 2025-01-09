@@ -3,244 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Admin Panel - Hacker Vibes</title>
     <style>
-        /* Global Styles */
-        body {
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
             font-family: 'Courier New', Courier, monospace;
             background: black;
-            color: #00FF00;
+            color: #00ff00;
             overflow: hidden;
         }
-
-        /* Matrix Animation */
         canvas {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
             z-index: -1;
         }
-
-        /* Layout Styles */
         .container {
-            display: flex;
-            height: 100vh;
-        }
-
-        .sidebar {
-            width: 25%;
-            background: rgba(0, 0, 0, 0.9);
+            max-width: 1200px;
+            margin: 50px auto;
             padding: 20px;
-            box-shadow: 0 0 10px #00FF00;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff00;
+            border-radius: 10px;
             overflow-y: auto;
+            max-height: 80vh;
         }
-
-        .sidebar h2 {
-            margin: 0 0 10px 0;
-            color: #00FF00;
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            margin-bottom: 15px;
+            color: #00ff00;
             text-align: center;
         }
-
-        .user-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .user-list li {
-            cursor: pointer;
+        .message {
+            margin-bottom: 10px;
             padding: 10px;
-            border: 1px solid #00FF00;
-            margin-bottom: 5px;
-            transition: background 0.3s;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 5px;
+            white-space: pre-wrap; /* Preserve line breaks */
+            overflow: hidden;
         }
-
-        .user-list li:hover {
-            background: #003300;
+        .message .content {
+            max-height: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-
-        .content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
+        .message .content.expanded {
+            max-height: none;
         }
-
-        .content h2 {
-            margin-top: 0;
-        }
-
-        .card {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #00FF00;
-            box-shadow: 0 0 10px #00FF00;
-        }
-
-        .refresh-btn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: #00FF00;
+        .message button {
+            margin-top: 10px;
+            padding: 5px;
+            background: #00ff00;
             color: black;
             border: none;
-            padding: 10px 20px;
+            border-radius: 3px;
             cursor: pointer;
-            font-size: 16px;
         }
+        .message button:hover {
+            background: #009900;
+        }
+        footer {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 1.2em; /* Slightly larger font for emphasis */
+    color: #ff0000; /* Initial color */
+    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000; /* Initial glow effect */
+    font-family: 'Courier New', Courier, monospace; /* Hacker-style font */
+    animation: glow 1s infinite alternate; /* Animation to change colors */
+}
 
-        .refresh-btn:hover {
-            background: #003300;
-            color: #00FF00;
-        }
+@keyframes glow {
+    0% {
+        color: #ff0000; /* Red */
+        text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000;
+    }
+    100% {
+        color: #0000ff; /* Blue */
+        text-shadow: 0 0 10px #0000ff, 0 0 20px #0000ff, 0 0 30px #0000ff;
+    }
+}
     </style>
 </head>
 <body>
-    <!-- Canvas for Matrix Animation -->
-    <canvas id="matrix"></canvas>
-
-    <!-- Admin Panel -->
-    <div class="admin-panel">
-        <div class="sidebar">
-            <h1 id="total-users">Total Users: 0</h1>
-            <ul id="user-list"></ul>
+    <canvas id="backgroundCanvas"></canvas>
+    <div class="container">
+        <div class="section" id="world-chat">
+            <h2>CodeAdmin-World Chat</h2>
+            <div id="chat-messages"></div>
         </div>
-        <div class="content">
-            <div id="user-data">
-                <p>Select a user to view their details.</p>
-            </div>
+        <div class="section" id="emails">
+            <h2>User Emails</h2>
+            <div id="email-messages"></div>
         </div>
     </div>
-
+    <footer style="text-align: center; margin-top: 20px; font-size: 14px; color: #888;">
+        &copy; 2025 Prashant Pandey | Site Name: Code-Admin<br>
+        Made by Prashant Pandey
+    </footer>
     <script>
-        // Matrix Animation
-        const canvas = document.getElementById('matrix');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-        const drops = Array.from({ length: Math.floor(columns) }, () => 1);
-    
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-            ctx.fillStyle = '#00FF00';
-            ctx.font = `${fontSize}px monospace`;
-    
-            drops.forEach((y, i) => {
-                const text = String.fromCharCode(0x30A0 + Math.random() * 96);
-                const x = i * fontSize;
-                ctx.fillText(text, x, y * fontSize);
-    
-                if (y * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-    
-                drops[i]++;
+        const chatContainer = document.getElementById('chat-messages');
+        const emailContainer = document.getElementById('email-messages');
+
+        async function fetchChats() {
+            const response = await fetch('/world_chat');
+            const data = await response.json();
+            chatContainer.innerHTML = '';
+
+            data.chats.forEach(chat => {
+                const chatElement = document.createElement('div');
+                chatElement.classList.add('message');
+                chatElement.innerHTML = `<strong>${chat.username}</strong> (${formatTime(chat.timestamp)}): 
+                                         <div class="content">${chat.message}</div>`;
+
+                const toggleButton = document.createElement('button');
+                toggleButton.textContent = 'Show More';
+                toggleButton.addEventListener('click', () => {
+                    const contentDiv = chatElement.querySelector('.content');
+                    contentDiv.classList.toggle('expanded');
+                    toggleButton.textContent = contentDiv.classList.contains('expanded') ? 'Show Less' : 'Show More';
+                });
+
+                chatElement.appendChild(toggleButton);
+                chatContainer.appendChild(chatElement);
             });
         }
-    
-        setInterval(drawMatrix, 50);
-    
-        // Fetch and Display Users
-        async function fetchUsers() {
-            try {
-                const response = await fetch('/admin', {
-                    headers: { 'Accept': 'application/json' },
+
+        async function fetchEmails() {
+            const response = await fetch('/emails');
+            const data = await response.json();
+            emailContainer.innerHTML = '';
+
+            data.emails.forEach(email => {
+                const emailElement = document.createElement('div');
+                emailElement.classList.add('message');
+                emailElement.innerHTML = `<strong>${email.email}</strong>: 
+                                          <div class="content">${email.problem}</div>`;
+
+                const toggleButton = document.createElement('button');
+                toggleButton.textContent = 'Show More';
+                toggleButton.addEventListener('click', () => {
+                    const contentDiv = emailElement.querySelector('.content');
+                    contentDiv.classList.toggle('expanded');
+                    toggleButton.textContent = contentDiv.classList.contains('expanded') ? 'Show Less' : 'Show More';
                 });
-    
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+
+                emailElement.appendChild(toggleButton);
+                emailContainer.appendChild(emailElement);
+            });
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+            });
+        }
+
+        setInterval(fetchChats, 15000);
+        setInterval(fetchEmails, 15000);
+
+        // Matrix Background Animation
+        const canvas = document.getElementById('backgroundCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#00ff00";
+            ctx.font = fontSize + "px 'Courier New'";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = letters[Math.floor(Math.random() * letters.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height || Math.random() > 0.95) {
+                    drops[i] = 0;
                 }
-    
-                const data = await response.json();
-                updateUserList(data.user_list, data.total_users);
-            } catch (error) {
-                console.error('Error fetching users:', error);
+
+                drops[i]++;
             }
         }
-    
-        // Update User List in the UI
-        function updateUserList(userList, totalUsers) {
-            const totalUsersDiv = document.getElementById('total-users');
-            const userListDiv = document.getElementById('user-list');
-    
-            if (!totalUsersDiv || !userListDiv) {
-                console.error('Error: Required elements not found in the DOM.');
-                return;
+
+        function drawShapes() {
+            for (let i = 0; i < 10; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 50, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 255, 0, ${Math.random() * 0.3})`;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.rect(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 50, Math.random() * 50);
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.1})`;
+                ctx.fill();
             }
-    
-            totalUsersDiv.innerText = `Total Users: ${totalUsers}`;
-            userListDiv.innerHTML = userList
-                .map(
-                    (user) => `
-                <li onclick="fetchUserData('${user}')">${user}</li>
-            `
-                )
-                .join('');
-        }
-    
-        // Fetch and Display User Data
-        async function fetchUserData(ip) {
-    const userDataDiv = document.getElementById('user-data');
-    if (!userDataDiv) {
-        console.error('Error: User data element not found.');
-        return;
-    }
-
-    userDataDiv.innerHTML = '<p>Loading user data...</p>';
-
-    try {
-        const response = await fetch(`/admin/user/${ip}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log(data); // Debug the structure of the response
+        function animate() {
+            drawMatrix();
+            drawShapes();
+            requestAnimationFrame(animate);
+        }
 
-        // Safely handle data properties
-        const messages = Array.isArray(data.messages) ? data.messages : [];
-        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
-        const email = data.email?.email || 'Not provided';
-        const files = Array.isArray(data.files) ? data.files : [];
-
-        userDataDiv.innerHTML = `
-            <h2>User: ${data.ip}</h2>
-            <div class="card">
-                <h3>Messages</h3>
-                <ul>${messages.map(msg => `<li>${msg.content} (${msg.timestamp})</li>`).join('')}</ul>
-            </div>
-            <div class="card">
-                <h3>Notifications</h3>
-                <ul>${notifications.map(note => `<li>${note.message} (${note.timestamp})</li>`).join('')}</ul>
-            </div>
-            <div class="card">
-                <h3>Email</h3>
-                <p>${email}</p>
-            </div>
-            <div class="card">
-                <h3>Files</h3>
-                <ul>${files.map(file => `<li><a href="/user/files/${data.ip}/${file}" target="_blank">${file}</a></li>`).join('')}</ul>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error fetching user data:', error);
-        userDataDiv.innerHTML = '<p>Error fetching user data. Please try again later.</p>';
-    }
-}
-
-        // Auto Refresh User List
-        setInterval(fetchUsers, 5000); // Refresh every 5 seconds
-    
-        // Initial Load
-        fetchUsers();
+        animate();
     </script>
-    
 </body>
 </html>
