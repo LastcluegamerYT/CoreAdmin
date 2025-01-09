@@ -42,18 +42,34 @@ def home():
 
 @app.route("/submit_problem", methods=["POST"])
 def submit_problem():
-    data = request.json
-    email = data.get("email")
-    problem = data.get("problem")
+    try:
+        # Parse incoming JSON data
+        data = request.json
+        email = data.get("email")
+        problem = data.get("problem")
 
-    if not email or not problem:
-        return jsonify({"status": "error", "message": "Email and problem are required"}), 400
+        # Validate inputs
+        if not email or not problem:
+            return jsonify({"status": "error", "message": "Email and problem are required"}), 400
 
-    users = load_json(USER_DATA_FILE, [])
-    users.append({"email": email, "problem": problem})
-    save_json(USER_DATA_FILE, users)
+        # Load existing user data
+        users = load_json(USER_DATA_FILE, [])
 
-    return jsonify({"status": "success", "message": "submitted successfully,   You will get mail in 5 hours,   Thanks you})
+        # Append the new problem
+        users.append({"email": email, "problem": problem})
+        
+        # Save updated data
+        save_json(USER_DATA_FILE, users)
+
+        # Success response
+        return jsonify({
+            "status": "success",
+            "message": f"Problem submitted successfully. We will send you an email within 5 hours to this email address: {email}"
+        })
+
+    except Exception as e:
+        # Generic error handling
+        return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"}), 500
 
 @app.route("/emails", methods=["GET"])
 def get_emails():
