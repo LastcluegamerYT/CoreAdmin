@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAGIC X AI - The Ultimate Song Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <img src="image/logo.png" alt="GOD mode on">
+        </div>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        <nav>
+            <ul id="nav-links">
+                <li><a href="#home" class="active">Home</a></li>
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#contact">Contact Us</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    
+
+  <!-- Hero Section -->
+<section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Unleash Your Creativity</h1>
+        <p>Join the rhythm of innovation and creativity.</p>
+        <button class="cta-button" id="unleashButton">Unleash Your Beat</button>
+    </div>
+</section>
+
+<!-- Full-Screen Box -->
+<div class="fullscreen-box" id="fullscreenBox">
+    <iframe id="iframeContent" src="about:blank" frameborder="0"></iframe>
+    <button class="close-button" id="closeButton">X</button>
+</div>
+
+
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <h2 class="about-title">About Us</h2>
+                <div class="about-description">
+                    <p>
+                        Welcome to <strong>MAGIX X CodeAdmin</strong>, the ultimate destination where creativity meets cutting-edge technology.
+                    </p>
+                    <p>
+                        Our mission is to make music creation accessible, exciting, and limitless for everyone—whether you're a seasoned musician, a hobbyist, or someone exploring the magic of melodies for the first time.
+                    </p>
+                    <div class="about-features">
+                        <h3>What Drives Us?</h3>
+                        <p>
+                            At MAGIC X CodeAdmin, we believe that music is the universal language of the soul. It has the power to inspire, heal, and unite. Our platform empowers users to:
+                        </p>
+                        <ul>
+                            <li><strong>Compose Unique Tracks:</strong> Generate songs tailored to your mood, style, or story.</li>
+                            <li><strong>Experiment Freely:</strong> Play around with genres, tones, and lyrics—no prior experience needed.</li>
+                            <li><strong>Express Yourself:</strong> Create music that reflects your individuality and passion.</li>
+                        </ul>
+                    </div>
+                    <div class="about-technology">
+                        <h3>Our Technology</h3>
+                        <p>
+                            MAGIC X CodeAdmin is powered by advanced AI models trained on diverse musical datasets. These models are capable of:
+                        </p>
+                        <ul>
+                            <li>Writing heartfelt lyrics in seconds.</li>
+                            <li>Crafting seamless melodies across various genres.</li>
+                            <li>Providing endless inspiration for your creative journey.</li>
+                        </ul>
+                        <p>Our platform isn’t just a tool—it’s your co-creator, helping you bring your vision to life.</p>
+                    </div>
+                    <div class="about-vision">
+                        <h3>Our Vision</h3>
+                        <p>
+                            We dream of a world where music creation is as easy and natural as humming your favorite tune. MAGIC X CodeAdmin aims to inspire a new generation of artists who break free from traditional barriers and let their creativity soar.
+                        </p>
+                    </div>
+                    <p>
+                        Whether you want to create a hit single, experiment with sounds, or simply have fun, <strong>MAGIC X CodeAdmin</strong> is here to turn your dreams into reality. Together, let’s compose the soundtrack of tomorrow.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2>Contact Us</h2>
+            <form id="contact-form">
+                <input type="text" name="name" placeholder="Your Name" required>
+                <input type="email" name="email" placeholder="Your Email" required>
+                <textarea name="message" placeholder="Your Message" required></textarea>
+                <button type="submit" class="submit-button">Send Message</button>
+            </form>
+        </div>
+    </section>
+   
+    <!-- Footer Section -->
+<footer class="developer-section">
+    <div class="container">
+        <h2 class="section-title">Our Team</h2>
+        <div class="team-cards">
+            <!-- Developer Card -->
+            <div class="team-card developer-card">
+                <div class="card-content">
+                    <h3>Prashant Pandey</h3>
+                    <p class="role">Developer</p>
+                    <p><strong>Age:</strong> 16</p>
+                    <p><strong>Location:</strong> Jaleshwar, Nepal</p>
+                    <p><strong>Phone:</strong> <a href="tel:+9814897653">9814897653</a></p>
+                    <p><strong>Telegram:</strong> <a href="https://t.me/developer_prashant" target="_blank">@developer_prashant</a></p>
+                </div>
+            </div>
+
+            <!-- Supporter Card -->
+            <div class="team-card supporter-card">
+                <div class="card-content">
+                    <h3>Vivek Kumar</h3>
+                    <p class="role">Team Member / Supporter</p>
+                    <p><strong>Age:</strong> 19</p>
+                    <p><strong>Location:</strong> Motihari, Bihar, India</p>
+                    <p><strong>Telegram:</strong> <a href="https://t.me/vivek3214" target="_blank">@vivek3214</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+    
+    <!-- Footer -->
+    <footer>
+        <p>© 2024 CodeAdmin | All Rights Reserved.</p>
+    </footer>
+
+    <!-- Background Music -->
+    <!-- Audio Controls -->
+<div class="audio-controls">
+    <button id="audio-switch" aria-label="Switch Song">
+        <span class="icon">&#x1F500;</span>
+    </button>
+    <div class="volume-control">
+        <input type="range" id="volume-control" min="0" max="100" value="50" aria-label="Volume Control">
+    </div>
+</div>
+<audio id="background-music" autoplay></audio>
+
+
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+    
+</body>
+</html>
