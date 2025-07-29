@@ -1,9 +1,11 @@
 from flask import Flask, request, send_file, jsonify
+from flask_cors import CORS
 from gtts import gTTS
 import os
 import uuid
 
 app = Flask(__name__)
+CORS(app)  # This enables CORS for all domains
 
 # Ensure the audio directory exists at startup
 AUDIO_DIR = os.path.join(os.getcwd(), "audios")
